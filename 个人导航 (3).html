@@ -1,0 +1,588 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的导航</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%233B5BFD'/%3E%3Cpath d='M7 17V7h10v2.4h-7.4v2.2H16v2.3h-6.4V17z' fill='white'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #F4F5F7;
+    --bg-soft: #ECEEF2;
+    --card: #FFFFFF;
+    --card-hover: #F7F8FC;
+    --text: #1B1E25;
+    --text-2: #5B6170;
+    --text-3: #9AA0AE;
+    --line: #E4E7ED;
+    --accent: #3B5BFD;
+    --accent-soft: rgba(59, 91, 253, 0.10);
+    --shadow: 0 1px 2px rgba(20, 24, 34, 0.06), 0 8px 24px rgba(20, 24, 34, 0.06);
+    --shadow-hover: 0 2px 4px rgba(20, 24, 34, 0.08), 0 14px 32px rgba(20, 24, 34, 0.12);
+  }
+  [data-theme="dark"] {
+    --bg: #131519;
+    --bg-soft: #1B1E24;
+    --card: #1E2229;
+    --card-hover: #262B33;
+    --text: #ECEDF1;
+    --text-2: #B4BAC6;
+    --text-3: #787F8D;
+    --line: #2C313A;
+    --accent: #6B85FF;
+    --accent-soft: rgba(107, 133, 255, 0.16);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.28);
+    --shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 14px 32px rgba(0, 0, 0, 0.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== 顶部 ===== */
+  header { padding: 40px 0 24px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark {
+    width: 38px; height: 38px; border-radius: 11px; background: var(--accent);
+    display: grid; place-items: center; color: #fff; flex: none;
+  }
+  .brand-mark svg { width: 20px; height: 20px; }
+  .brand-name { font-size: 18px; font-weight: 700; letter-spacing: 0.02em; }
+  .brand-sub { font-size: 12px; color: var(--text-3); }
+  .top-actions { display: flex; align-items: center; gap: 10px; }
+
+  .icon-btn {
+    width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text-2); cursor: pointer;
+    display: grid; place-items: center; transition: all 0.18s ease;
+  }
+  .icon-btn:hover { color: var(--text); border-color: var(--text-3); }
+  .icon-btn svg { width: 18px; height: 18px; }
+
+  .greet { margin-bottom: 22px; }
+  .greet h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.01em; }
+  .greet p { margin-top: 6px; color: var(--text-2); font-size: 14px; }
+  .greet .clock { font-variant-numeric: tabular-nums; color: var(--text-3); }
+
+  /* ===== 搜索 ===== */
+  .search-row { display: flex; gap: 10px; }
+  .search-box {
+    flex: 1; display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 0 16px; height: 52px; transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  .search-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .search-box svg { width: 19px; height: 19px; color: var(--text-3); flex: none; }
+  .search-box input {
+    flex: 1; border: none; outline: none; background: transparent;
+    font-size: 15px; color: var(--text); min-width: 0;
+  }
+  .search-box input::placeholder { color: var(--text-3); }
+  .engine-select {
+    border: none; background: transparent; color: var(--text-2); font-size: 13px;
+    cursor: pointer; outline: none; padding: 6px 4px; border-right: 1px solid var(--line);
+  }
+  .search-submit {
+    height: 36px; padding: 0 18px; border: none; border-radius: 10px;
+    background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: filter 0.18s ease;
+  }
+  .search-submit:hover { filter: brightness(1.08); }
+
+  /* ===== 分类标签 ===== */
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 28px 0 20px; }
+  .tab {
+    border: 1px solid var(--line); background: var(--card); color: var(--text-2);
+    padding: 8px 15px; border-radius: 999px; font-size: 13px; cursor: pointer;
+    transition: all 0.18s ease;
+  }
+  .tab:hover { color: var(--text); border-color: var(--text-3); }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ===== 站点网格 ===== */
+  .grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    padding-bottom: 40px;
+  }
+  .site {
+    position: relative; background: var(--card); border: 1px solid var(--line);
+    border-radius: 16px; padding: 18px 16px; display: flex; align-items: center; gap: 13px;
+    text-decoration: none; color: var(--text); box-shadow: var(--shadow);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  }
+  .site:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); background: var(--card-hover); }
+  .site-icon {
+    width: 42px; height: 42px; border-radius: 12px; flex: none; display: grid; place-items: center;
+    color: #fff; font-weight: 700; font-size: 17px; letter-spacing: 0.02em;
+  }
+  .site-meta { min-width: 0; flex: 1; }
+  .site-name { font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .site-url { font-size: 12px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .site-ops { position: absolute; top: 10px; right: 10px; display: none; gap: 6px; }
+  .site:hover .site-ops { display: flex; }
+  .op-btn {
+    width: 26px; height: 26px; border-radius: 8px; border: none; cursor: pointer;
+    background: var(--bg-soft); color: var(--text-2); display: grid; place-items: center;
+  }
+  .op-btn:hover { color: var(--text); background: var(--line); }
+  .op-btn svg { width: 14px; height: 14px; }
+  .op-btn.danger:hover { color: #E5484D; }
+
+  .empty {
+    grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-3);
+  }
+  .empty svg { width: 40px; height: 40px; margin-bottom: 12px; opacity: 0.5; }
+  .empty p { font-size: 14px; }
+
+  /* ===== 添加卡片 ===== */
+  .site.add-card {
+    border: 1.5px dashed var(--line); background: transparent; box-shadow: none;
+    justify-content: center; cursor: pointer; color: var(--text-3);
+  }
+  .site.add-card:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .add-inner { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; }
+  .add-inner svg { width: 18px; height: 18px; }
+
+  /* ===== 弹窗 ===== */
+  .mask {
+    position: fixed; inset: 0; background: rgba(15, 18, 25, 0.5); z-index: 50;
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .mask.show { display: flex; }
+  .modal {
+    background: var(--card); border-radius: 18px; width: 100%; max-width: 420px;
+    padding: 26px; box-shadow: var(--shadow-hover);
+  }
+  .modal h2 { font-size: 18px; margin-bottom: 20px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; color: var(--text-2); margin-bottom: 7px; }
+  .field input, .field select {
+    width: 100%; height: 42px; padding: 0 13px; border: 1px solid var(--line);
+    border-radius: 11px; background: var(--bg); color: var(--text); font-size: 14px; outline: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+  .color-row { display: flex; gap: 9px; flex-wrap: wrap; }
+  .color-dot {
+    width: 30px; height: 30px; border-radius: 9px; cursor: pointer; border: 2px solid transparent;
+  }
+  .color-dot.sel { border-color: var(--text); }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+  .btn { height: 40px; padding: 0 18px; border-radius: 11px; font-size: 14px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--text-2); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .btn:hover { filter: brightness(1.05); }
+
+  footer { text-align: center; padding: 24px 0 36px; color: var(--text-3); font-size: 12px; }
+
+  /* ===== 响应式 ===== */
+  @media (max-width: 900px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 680px) {
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .greet h1 { font-size: 24px; }
+    header { padding: 28px 0 18px; }
+    .search-row { flex-wrap: wrap; }
+    .search-submit { width: 100%; }
+  }
+  @media (max-width: 420px) { .grid { grid-template-columns: 1fr; } }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h10M4 17h13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <div class="brand-name">我的导航</div>
+          <div class="brand-sub">常用站点，一键直达</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" id="themeBtn" title="切换深浅色">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="icon-btn" id="resetBtn" title="恢复默认站点">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="greet">
+      <h1 id="greetText">你好</h1>
+      <p><span class="clock" id="clock"></span> · 今天也要高效一点</p>
+    </div>
+
+    <div class="search-row">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <select class="engine-select" id="engineSelect" title="选择搜索引擎">
+          <option value="baidu">百度</option>
+          <option value="bing">必应</option>
+          <option value="google">Google</option>
+        </select>
+        <input type="text" id="searchInput" placeholder="输入关键词搜索，或回车直达…" autocomplete="off">
+      </div>
+      <button class="search-submit" id="searchBtn">搜索</button>
+    </div>
+
+    <div class="tabs" id="tabs"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>数据保存在本机浏览器，清除浏览器缓存后将恢复默认</footer>
+
+<!-- 弹窗 -->
+<div class="mask" id="mask">
+  <div class="modal">
+    <h2 id="modalTitle">添加站点</h2>
+    <div class="field">
+      <label>站点名称</label>
+      <input type="text" id="fName" placeholder="例如：GitHub">
+    </div>
+    <div class="field">
+      <label>网址</label>
+      <input type="text" id="fUrl" placeholder="https://github.com">
+    </div>
+    <div class="field">
+      <label>所属分类</label>
+      <select id="fCategory"></select>
+    </div>
+    <div class="field">
+      <label>图标颜色</label>
+      <div class="color-row" id="colorRow"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="cancelBtn">取消</button>
+      <button class="btn primary" id="saveBtn">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var COLORS = ["#3B5BFD", "#0EA5A4", "#E8743B", "#D6457A", "#7C5CE0", "#4C8BF5", "#5B9E4E", "#C9922E"];
+  var ENGINES = {
+    baidu: "https://www.baidu.com/s?wd=",
+    bing: "https://www.bing.com/search?q=",
+    google: "https://www.google.com/search?q="
+  };
+  var STORE_KEY = "personal-nav-data-v1";
+  var THEME_KEY = "personal-nav-theme";
+
+  var DEFAULT_DATA = {
+    categories: [
+      { id: "common", name: "常用" },
+      { id: "dev", name: "开发" },
+      { id: "design", name: "设计" },
+      { id: "study", name: "学习" },
+      { id: "tool", name: "工具" },
+      { id: "personal", name: "个人" }
+    ],
+    links: [
+      { id: 1,  name: "百度",       url: "https://www.baidu.com",   category: "common", color: "#3B5BFD" },
+      { id: 2,  name: "必应",       url: "https://www.bing.com",    category: "common", color: "#0EA5A4" },
+      { id: 3,  name: "知乎",       url: "https://www.zhihu.com",    category: "common", color: "#4C8BF5" },
+      { id: 4,  name: "哔哩哔哩",    url: "https://www.bilibili.com", category: "common", color: "#E8743B" },
+      { id: 5,  name: "GitHub",    url: "https://github.com",       category: "dev",    color: "#7C5CE0" },
+      { id: 6,  name: "MDN 文档",   url: "https://developer.mozilla.org/zh-CN", category: "dev", color: "#3B5BFD" },
+      { id: 7,  name: "掘金",       url: "https://juejin.cn",        category: "dev",    color: "#E8743B" },
+      { id: 8,  name: "Stack Overflow", url: "https://stackoverflow.com", category: "dev", color: "#C9922E" },
+      { id: 9,  name: "V2EX",      url: "https://www.v2ex.com",      category: "dev",    color: "#5B9E4E" },
+      { id: 10, name: "Figma",      url: "https://www.figma.com",     category: "design", color: "#D6457A" },
+      { id: 11, name: "Dribbble",   url: "https://dribbble.com",     category: "design", color: "#E8743B" },
+      { id: 12, name: "花瓣网",     url: "https://huaban.com",       category: "design", color: "#D6457A" },
+      { id: 13, name: "维基百科",    url: "https://zh.wikipedia.org",  category: "study",  color: "#4C8BF5" },
+      { id: 14, name: "网易公开课",  url: "https://open.163.com",     category: "study",  color: "#5B9E4E" },
+      { id: 15, name: "百度翻译",    url: "https://fanyi.baidu.com",  category: "tool",   color: "#0EA5A4" },
+      { id: 16, name: "腾讯文档",    url: "https://docs.qq.com",      category: "tool",   color: "#3B5BFD" },
+      { id: 17, name: "Bar",         url: "http://bar.lizanyang.top/",     category: "personal", color: "#7C5CE0" },
+      { id: 18, name: "Live 直播",   url: "https://live.lizanyang.top/",  category: "personal", color: "#E8743B" },
+      { id: 19, name: "Bing 镜像",   url: "https://bing.lizanyang.top/",  category: "personal", color: "#4C8BF5" },
+      { id: 20, name: "内网服务 5666", url: "http://192.168.5.226:5666/", category: "personal", color: "#5B9E4E" }
+    ]
+  };
+
+  var state = { activeCat: "all", search: "", editingId: null, selColor: COLORS[0] };
+  var data = load();
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.categories) && Array.isArray(parsed.links)) {
+          var exist = {};
+          parsed.categories.forEach(function (c) { exist[c.id] = true; });
+          DEFAULT_DATA.categories.forEach(function (c) {
+            if (!exist[c.id]) parsed.categories.push({ id: c.id, name: c.name });
+          });
+          var existUrl = {};
+          parsed.links.forEach(function (l) { existUrl[l.url] = true; });
+          DEFAULT_DATA.links.forEach(function (l) {
+            if (!existUrl[l.url]) parsed.links.push({ id: l.id, name: l.name, url: l.url, category: l.category, color: l.color });
+          });
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return JSON.parse(JSON.stringify(DEFAULT_DATA));
+  }
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (e) {}
+  }
+
+  /* ===== 主题 ===== */
+  function applyTheme(t) {
+    document.documentElement.setAttribute("data-theme", t);
+    var dark = t === "dark";
+    var btn = document.getElementById("themeBtn");
+    btn.innerHTML = dark
+      ? '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+  }
+  var savedTheme = localStorage.getItem(THEME_KEY);
+  applyTheme(savedTheme || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+
+  document.getElementById("themeBtn").addEventListener("click", function () {
+    var cur = document.documentElement.getAttribute("data-theme");
+    var next = cur === "dark" ? "light" : "dark";
+    applyTheme(next);
+    localStorage.setItem(THEME_KEY, next);
+  });
+
+  /* ===== 时钟与问候 ===== */
+  function tick() {
+    var now = new Date();
+    var h = now.getHours();
+    var greet = h < 6 ? "夜深了" : h < 12 ? "早上好" : h < 14 ? "中午好" : h < 18 ? "下午好" : "晚上好";
+    document.getElementById("greetText").textContent = greet;
+    var pad = function (n) { return n < 10 ? "0" + n : n; };
+    var week = ["日", "一", "二", "三", "四", "五", "六"][now.getDay()];
+    document.getElementById("clock").textContent =
+      now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日 星期" + week +
+      " " + pad(h) + ":" + pad(now.getMinutes());
+  }
+  tick();
+  setInterval(tick, 30000);
+
+  /* ===== 工具 ===== */
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function normalizeUrl(u) {
+    u = String(u || "").trim();
+    if (!u) return "";
+    if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+    return u;
+  }
+  function hostOf(u) {
+    try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return u; }
+  }
+  function firstChar(name) {
+    var c = String(name || "?").trim().charAt(0).toUpperCase();
+    return /[A-Z0-9\u4e00-\u9fa5]/.test(c) ? c : "?";
+  }
+
+  /* ===== 渲染分类标签 ===== */
+  function renderTabs() {
+    var tabs = document.getElementById("tabs");
+    var cats = [{ id: "all", name: "全部" }].concat(data.categories);
+    tabs.innerHTML = cats.map(function (c) {
+      return '<button class="tab' + (state.activeCat === c.id ? " active" : "") + '" data-cat="' + c.id + '">' + escapeHtml(c.name) + "</button>";
+    }).join("");
+    tabs.querySelectorAll(".tab").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        state.activeCat = btn.getAttribute("data-cat");
+        renderTabs();
+        renderGrid();
+      });
+    });
+  }
+
+  /* ===== 渲染站点 ===== */
+  function renderGrid() {
+    var grid = document.getElementById("grid");
+    var kw = state.search.trim().toLowerCase();
+    var list = data.links.filter(function (l) {
+      var catOk = state.activeCat === "all" || l.category === state.activeCat;
+      var kwOk = !kw || l.name.toLowerCase().indexOf(kw) >= 0 || hostOf(l.url).toLowerCase().indexOf(kw) >= 0;
+      return catOk && kwOk;
+    });
+
+    if (list.length === 0) {
+      grid.innerHTML =
+        '<div class="empty"><svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><p>' +
+        (kw ? "没有找到匹配的站点" : "这个分类还没有站点，点击下方添加") + "</p></div>" +
+        addCardHtml();
+      bindAddCard();
+      return;
+    }
+
+    grid.innerHTML = list.map(function (l) {
+      return (
+        '<a class="site" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer">' +
+          '<div class="site-icon" style="background:' + escapeHtml(l.color) + '">' + escapeHtml(firstChar(l.name)) + "</div>" +
+          '<div class="site-meta"><div class="site-name">' + escapeHtml(l.name) + "</div>" +
+          '<div class="site-url">' + escapeHtml(hostOf(l.url)) + "</div></div>" +
+          '<div class="site-ops">' +
+            '<button class="op-btn" data-act="edit" data-id="' + l.id + '" title="编辑"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20h4L19 9l-4-4L4 16v4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m13.5 6.5 4 4" stroke="currentColor" stroke-width="1.8"/></svg></button>' +
+            '<button class="op-btn danger" data-act="del" data-id="' + l.id + '" title="删除"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14M9 7V5h6v2m-7 0 1 13h6l1-13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+          "</div>" +
+        "</a>"
+      );
+    }).join("") + addCardHtml();
+
+    grid.querySelectorAll(".op-btn").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = Number(btn.getAttribute("data-id"));
+        if (btn.getAttribute("data-act") === "edit") openModal(id);
+        else deleteLink(id);
+      });
+    });
+    bindAddCard();
+  }
+
+  function addCardHtml() {
+    return '<div class="site add-card" id="addCard"><div class="add-inner"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>添加站点</div></div>';
+  }
+  function bindAddCard() {
+    var el = document.getElementById("addCard");
+    if (el) el.addEventListener("click", function () { openModal(null); });
+  }
+
+  /* ===== 弹窗 ===== */
+  var mask = document.getElementById("mask");
+  var fName = document.getElementById("fName");
+  var fUrl = document.getElementById("fUrl");
+  var fCategory = document.getElementById("fCategory");
+  var colorRow = document.getElementById("colorRow");
+
+  function renderColorRow() {
+    colorRow.innerHTML = COLORS.map(function (c) {
+      return '<div class="color-dot' + (state.selColor === c ? " sel" : "") + '" data-color="' + c + '" style="background:' + c + '"></div>';
+    }).join("");
+    colorRow.querySelectorAll(".color-dot").forEach(function (d) {
+      d.addEventListener("click", function () {
+        state.selColor = d.getAttribute("data-color");
+        renderColorRow();
+      });
+    });
+  }
+  function renderCategorySelect() {
+    fCategory.innerHTML = data.categories.map(function (c) {
+      return '<option value="' + c.id + '">' + escapeHtml(c.name) + "</option>";
+    }).join("");
+  }
+
+  function openModal(id) {
+    state.editingId = id;
+    renderCategorySelect();
+    if (id == null) {
+      document.getElementById("modalTitle").textContent = "添加站点";
+      fName.value = ""; fUrl.value = "";
+      fCategory.value = data.categories[0].id;
+      state.selColor = COLORS[0];
+    } else {
+      var l = data.links.find(function (x) { return x.id === id; });
+      if (!l) return;
+      document.getElementById("modalTitle").textContent = "编辑站点";
+      fName.value = l.name; fUrl.value = l.url;
+      fCategory.value = l.category;
+      state.selColor = l.color;
+    }
+    renderColorRow();
+    mask.classList.add("show");
+    fName.focus();
+  }
+  function closeModal() { mask.classList.remove("show"); state.editingId = null; }
+
+  document.getElementById("cancelBtn").addEventListener("click", closeModal);
+  mask.addEventListener("click", function (e) { if (e.target === mask) closeModal(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModal(); });
+
+  document.getElementById("saveBtn").addEventListener("click", function () {
+    var name = fName.value.trim();
+    var url = normalizeUrl(fUrl.value);
+    if (!name) { fName.focus(); return; }
+    if (!url) { fUrl.focus(); return; }
+    var cat = fCategory.value;
+    if (state.editingId == null) {
+      var newId = data.links.length ? Math.max.apply(null, data.links.map(function (x) { return x.id; })) + 1 : 1;
+      data.links.push({ id: newId, name: name, url: url, category: cat, color: state.selColor });
+    } else {
+      var l = data.links.find(function (x) { return x.id === state.editingId; });
+      if (l) { l.name = name; l.url = url; l.category = cat; l.color = state.selColor; }
+    }
+    save();
+    closeModal();
+    renderGrid();
+  });
+
+  function deleteLink(id) {
+    var l = data.links.find(function (x) { return x.id === id; });
+    if (!l) return;
+    if (!confirm('确定删除「' + l.name + '」吗？')) return;
+    data.links = data.links.filter(function (x) { return x.id !== id; });
+    save();
+    renderGrid();
+  }
+
+  /* ===== 搜索 ===== */
+  function doSearch() {
+    var q = document.getElementById("searchInput").value.trim();
+    if (!q) return;
+    var engine = document.getElementById("engineSelect").value;
+    window.open(ENGINES[engine] + encodeURIComponent(q), "_blank");
+  }
+  document.getElementById("searchBtn").addEventListener("click", doSearch);
+  document.getElementById("searchInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") doSearch();
+  });
+  document.getElementById("searchInput").addEventListener("input", function () {
+    state.search = this.value;
+    renderGrid();
+  });
+
+  /* ===== 重置 ===== */
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    if (!confirm("将清空你添加和修改的站点，恢复默认导航，确定吗？")) return;
+    data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    save();
+    state.activeCat = "all";
+    state.search = "";
+    document.getElementById("searchInput").value = "";
+    renderTabs();
+    renderGrid();
+  });
+
+  /* ===== 初始化 ===== */
+  renderTabs();
+  renderGrid();
+})();
+</script>
+</body>
+</html>
+<!-- （注：内容由AI生成） -->
