@@ -44,6 +44,34 @@
     line-height: 1.5;
     transition: background 0.25s ease, color 0.25s ease;
   }
+  /* ===== 背景装饰层 ===== */
+  .bg-layer {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+    background:
+      radial-gradient(900px 520px at 12% -10%, rgba(59, 91, 253, 0.10), transparent 60%),
+      radial-gradient(800px 480px at 100% 8%, rgba(14, 165, 164, 0.10), transparent 55%),
+      radial-gradient(700px 600px at 50% 110%, rgba(124, 92, 224, 0.08), transparent 60%);
+  }
+  .bg-layer::before {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(27, 30, 37, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(27, 30, 37, 0.045) 1px, transparent 1px);
+    background-size: 30px 30px;
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 30%, transparent 75%);
+  }
+  [data-theme="dark"] .bg-layer {
+    background:
+      radial-gradient(900px 520px at 12% -10%, rgba(107, 133, 255, 0.14), transparent 60%),
+      radial-gradient(800px 480px at 100% 8%, rgba(14, 165, 164, 0.12), transparent 55%),
+      radial-gradient(700px 600px at 50% 110%, rgba(124, 92, 224, 0.12), transparent 60%);
+  }
+  [data-theme="dark"] .bg-layer::before {
+    background-image:
+      linear-gradient(rgba(236, 237, 241, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(236, 237, 241, 0.05) 1px, transparent 1px);
+  }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
 
   /* ===== 顶部 ===== */
@@ -71,6 +99,9 @@
   .greet h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.01em; }
   .greet p { margin-top: 6px; color: var(--text-2); font-size: 14px; }
   .greet .clock { font-variant-numeric: tabular-nums; color: var(--text-3); }
+  .daily-quote { margin-top: 12px; padding: 12px 16px; background: var(--accent-soft); border-radius: 12px; }
+  .quote-en { font-size: 15px; font-weight: 500; color: var(--text); letter-spacing: 0.01em; }
+  .quote-zh { font-size: 13px; color: var(--text-2); margin-top: 4px; }
 
   /* ===== 搜索 ===== */
   .search-row { display: flex; gap: 10px; }
@@ -184,19 +215,33 @@
   /* ===== 响应式 ===== */
   @media (max-width: 900px) { .grid { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 680px) {
+    .wrap { padding: 0 16px; }
     .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    .greet h1 { font-size: 24px; }
-    header { padding: 28px 0 18px; }
+    .greet h1 { font-size: 23px; }
+    .greet p { font-size: 13px; }
+    header { padding: 24px 0 16px; }
+    .topbar { margin-bottom: 18px; }
+    .brand-sub { display: none; }
     .search-row { flex-wrap: wrap; }
+    .search-box { height: 48px; gap: 9px; }
+    .engine-select { font-size: 12px; }
     .search-submit { width: 100%; }
+    .tabs { gap: 7px; margin: 22px 0 16px; }
+    .tab { padding: 7px 13px; font-size: 12.5px; }
+    .daily-quote { padding: 11px 14px; }
+    .quote-en { font-size: 14px; }
+    .quote-zh { font-size: 12.5px; }
+    .site { padding: 14px 13px; gap: 11px; }
+    .site-icon { width: 38px; height: 38px; font-size: 15px; }
   }
-  @media (max-width: 420px) { .grid { grid-template-columns: 1fr; } }
+  @media (max-width: 380px) { .grid { grid-template-columns: 1fr; } }
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
   }
 </style>
 </head>
 <body>
+<div class="bg-layer" aria-hidden="true"></div>
 
 <header>
   <div class="wrap">
@@ -223,6 +268,10 @@
     <div class="greet">
       <h1 id="greetText">你好</h1>
       <p><span class="clock" id="clock"></span> · 今天也要高效一点</p>
+      <div class="daily-quote">
+        <p class="quote-en" id="quoteEn"></p>
+        <p class="quote-zh" id="quoteZh"></p>
+      </div>
     </div>
 
     <div class="search-row">
@@ -370,6 +419,395 @@
   });
 
   /* ===== 时钟与问候 ===== */
+  var QUOTES = [
+    { en: "The best way to predict the future is to create it.", zh: "预测未来最好的方式，就是亲手创造它。" },
+    { en: "Small steps every day add up to big results.", zh: "每日微小的一步，终会汇成巨大的成果。" },
+    { en: "Light tomorrow with today.", zh: "用今天的努力，点亮明天。" },
+    { en: "Difficult roads often lead to beautiful destinations.", zh: "艰难的路，往往通向绝美的风景。" },
+    { en: "Believe you can and you are halfway there.", zh: "相信自己能行，你就已经走完了一半。" },
+    { en: "It always seems impossible until it is done.", zh: "在事成之前，一切总看似不可能。" },
+    { en: "Everything you can imagine is real.", zh: "你能想象的一切，皆可成真。" },
+    { en: "Turn your wounds into wisdom.", zh: "把伤痛淬炼为智慧。" },
+    { en: "Action is the foundational key to all success.", zh: "行动，是一切成功的根基。" },
+    { en: "A goal without a plan is just a wish.", zh: "没有计划的目标，不过是一个愿望。" },
+    { en: "Progress, not perfection.", zh: "追求进步，而非完美。" },
+    { en: "Where there is a will, there is a way.", zh: "有志者，事竟成。" },
+    { en: "The quieter you become, the more you can hear.", zh: "内心越安静，听见的就越多。" },
+    { en: "What you do today can improve all your tomorrows.", zh: "今日所做，皆能成就更好的明天。" },
+    { en: "Do what you can, with what you have, where you are.", zh: "立足当下，尽其在我。" }
+  ];
+  QUOTES.push.apply(QUOTES, [
+    { en: "The journey of a thousand miles begins with a single step.", zh: "千里之行，始于足下。" },
+    { en: "Well begun is half done.", zh: "好的开端，是成功的一半。" },
+    { en: "Where there is life, there is hope.", zh: "留得青山在，不怕没柴烧。" },
+    { en: "Practice makes perfect.", zh: "熟能生巧。" },
+    { en: "Slow and steady wins the race.", zh: "稳扎稳打，终会得胜。" },
+    { en: "Never give up on what you really want.", zh: "别放弃你真正想要的东西。" },
+    { en: "Hard work beats talent when talent does not work hard.", zh: "天赋不努力时，努力便胜过天赋。" },
+    { en: "You do not have to be great to start, but you have to start to be great.", zh: "不必出色才开始，但要开始才会出色。" },
+    { en: "The future belongs to those who believe in their dreams.", zh: "未来属于相信梦想的人。" },
+    { en: "Success is not final, failure is not fatal.", zh: "成功不是终点，失败也并非末日。" },
+    { en: "Courage is not the absence of fear, but moving forward despite it.", zh: "勇气并非没有恐惧，而是心怀恐惧依然前行。" },
+    { en: "Every expert was once a beginner.", zh: "每位行家都曾是初学者。" },
+    { en: "A little effort every day goes a long way.", zh: "每天一点努力，日久见成效。" },
+    { en: "Do not wait for opportunity, create it.", zh: "别等待机遇，去创造机遇。" },
+    { en: "What starts strong still needs steady follow through.", zh: "开端再好，仍需坚持到底。" },
+    { en: "Small deeds are better than great intentions.", zh: "微小的行动，胜过宏大的心愿。" },
+    { en: "Keep going, even when progress feels slow.", zh: "即使进步缓慢，也要继续向前。" },
+    { en: "Your only limit is the one you set yourself.", zh: "唯一的局限，是你给自己设下的那道。" },
+    { en: "Dreams work hard when you do.", zh: "你肯努力，梦想才会发力。" },
+    { en: "Focus on being productive, not busy.", zh: "专注于出成果，而非瞎忙碌。" },
+    { en: "A rolling stone gathers no moss.", zh: "滚石不生苔，进取不停歇。" },
+    { en: "Fortune favors the bold.", zh: "幸运眷顾勇敢的人。" },
+    { en: "Better late than never.", zh: "迟做总比不做好。" },
+    { en: "Every day is a second chance.", zh: "每一天都是一次新的机会。" },
+    { en: "Make each day count.", zh: "让每一天都有价值。" },
+    { en: "Action cures anxiety.", zh: "行动是治愈焦虑的良药。" },
+    { en: "Start before you feel ready.", zh: "在准备好之前，就先出发。" },
+    { en: "Consistency turns small efforts into results.", zh: "持之以恒，点滴努力终成结果。" },
+    { en: "You learn more from failure than from success.", zh: "失败比成功更能教人成长。" },
+    { en: "Do one thing every day that scares you.", zh: "每天做一件让自己略有畏惧的事。" },
+    { en: "Progress is built on ordinary days.", zh: "进步藏在平凡的日常里。" },
+    { en: "Believe in the person you are becoming.", zh: "相信自己正在成为的那个人。" },
+    { en: "Patience and persistence bring fruit.", zh: "耐心与坚持，终会结出果实。" },
+    { en: "Do not look back, you are not going that way.", zh: "别回头，你要去的不是那个方向。" },
+    { en: "The best time to plant a tree was twenty years ago.", zh: "种一棵树最好的时间是十年前，其次是现在。" },
+    { en: "Opportunity dances with those already on the dance floor.", zh: "机遇只青睐已上场的人。" },
+    { en: "Winners never quit, quitters never win.", zh: "成功者不言放弃，放弃者难有所成。" },
+    { en: "It takes dedication to reach the summit.", zh: "登顶需要全身心的投入。" },
+    { en: "Every challenge is a hidden lesson.", zh: "每个挑战背后都藏着一课。" },
+    { en: "Put your heart into what you do.", zh: "做事时，带上你的真心。" },
+    { en: "A calm mind contains great strength.", zh: "沉静的内心蕴藏巨大力量。" },
+    { en: "Learn from yesterday, live for today.", zh: "借鉴昨天，活在今天。" },
+    { en: "Hope keeps the heart open.", zh: "希望让心扉常开。" },
+    { en: "Storms pass, but strength remains.", zh: "风雨会过，力量留存。" },
+    { en: "Be a voice, not an echo.", zh: "发出自己的声音，而非随声附和。" },
+    { en: "Great things take time.", zh: "伟大的成就需要时间。" },
+    { en: "Diligence is the mother of good fortune.", zh: "勤奋是好运之母。" },
+    { en: "An idle mind invites idle habits.", zh: "闲散的心容易滋生惰性。" },
+    { en: "Trust the process, not just the outcome.", zh: "相信过程，而不只盯着结果。" },
+    { en: "Where effort is invested, growth appears.", zh: "付出努力之处，自会生长。" }
+  ]);
+  QUOTES.push.apply(QUOTES, [
+    { en: "Knowledge is power, but application makes it real.", zh: "知识是力量，运用才让它落地。" },
+    { en: "Read broadly, think deeply.", zh: "广泛涉猎，深入思考。" },
+    { en: "A book a day keeps narrow-mindedness away.", zh: "每日一书，远离狭隘。" },
+    { en: "Curiosity is the engine of learning.", zh: "好奇心是学习的引擎。" },
+    { en: "Question everything, understand slowly.", zh: "凡事多问，慢慢理解。" },
+    { en: "Study hard and play fair.", zh: "努力学习，坦荡待人。" },
+    { en: "Repetition is the mother of skill.", zh: "重复是技艺之母。" },
+    { en: "Teach what you wish to learn.", zh: "想学会什么，就去教别人。" },
+    { en: "Mistakes are proof that you are trying.", zh: "犯错，证明你在尝试。" },
+    { en: "An investment in knowledge pays the best interest.", zh: "对知识的投资，回报最为丰厚。" },
+    { en: "Learn a little, use a lot.", zh: "学一点，用很多。" },
+    { en: "The mind expands with new ideas.", zh: "新的想法让眼界开阔。" },
+    { en: "Asking costs nothing, silence gains nothing.", zh: "提问不费成本，沉默难有收获。" },
+    { en: "Listen more than you speak.", zh: "多倾听，少说教。" },
+    { en: "Wisdom comes with reflection.", zh: "智慧源于复盘与自省。" },
+    { en: "Do not be afraid of not knowing, be afraid of not asking.", zh: "不怕不懂，就怕不问。" },
+    { en: "Every page turned opens a new door.", zh: "翻过的每一页，都打开一扇新门。" },
+    { en: "Sharpen the axe before cutting the tree.", zh: "砍树之前，先磨利斧头。" },
+    { en: "Learning never exhausts the mind.", zh: "学习从不会让心智疲惫。" },
+    { en: "A smart person learns from others.", zh: "聪明人懂得向他人取经。" },
+    { en: "Time spent on books is never wasted.", zh: "花在书本上的时间，从不白费。" },
+    { en: "Understand the why, not just the how.", zh: "理解缘由，而非只知方法。" },
+    { en: "Small notes preserve big ideas.", zh: "简短笔记，留住重要想法。" },
+    { en: "Habit is either a good servant or a bad master.", zh: "习惯或是好帮手，或是坏主人。" },
+    { en: "Begin with the basics, then climb higher.", zh: "先打基础，再求登高。" },
+    { en: "Open your eyes to the world around you.", zh: "睁开眼睛，观察周遭世界。" },
+    { en: "Study the past to understand the present.", zh: "研读过去，方能理解当下。" },
+    { en: "Doubt is the doorway to discovery.", zh: "怀疑是发现的入口。" },
+    { en: "Good habits quietly build a good life.", zh: "好习惯悄悄构筑好生活。" },
+    { en: "You are never too old to learn.", zh: "学习永远不嫌晚。" },
+    { en: "A clear question brings a clear answer.", zh: "问题问得清楚，答案才会明白。" },
+    { en: "Practice alone makes ability, reflection makes mastery.", zh: "练习成就能力，反思成就精通。" },
+    { en: "Fill your mind with useful things.", zh: "让头脑装满有用的知识。" },
+    { en: "Every lesson learned is a step forward.", zh: "每学到一课，都是向前一步。" },
+    { en: "Reading without thinking leaves loose ends.", zh: "读而不思，终是零散。" },
+    { en: "Know what you know, admit what you do not.", zh: "清楚自己所知，承认自己所不知。" },
+    { en: "Great readers become great thinkers.", zh: "善读者善思。" },
+    { en: "Expand your vocabulary, expand your world.", zh: "丰富词汇，开阔世界。" },
+    { en: "A steady study pace beats last-minute cramming.", zh: "稳步学习胜过临阵磨枪。" },
+    { en: "Thoughts grow clearer when written down.", zh: "落笔之后，思路更清晰。" },
+    { en: "Learn to rest, not to quit.", zh: "学会休息，而不是放弃。" },
+    { en: "Seeds of knowledge need time to sprout.", zh: "知识的种子，需要时间发芽。" },
+    { en: "Compare yourself to yesterday, not to others.", zh: "和昨天的自己比，不和别人比。" },
+    { en: "Curiosity turns the ordinary into the interesting.", zh: "好奇心让寻常变得有趣。" },
+    { en: "A strong foundation supports a tall building.", zh: "地基扎实，高楼才稳。" },
+    { en: "Gather facts before forming opinions.", zh: "先了解事实，再形成看法。" },
+    { en: "The more you read, the more you have to say.", zh: "读得越多，越有话可说。" },
+    { en: "Keep a humble attitude toward what you do not know.", zh: "面对未知，保持谦逊。" },
+    { en: "Each question answered raises a new one.", zh: "解答一问，又生新问。" },
+    { en: "Apply what you learn while it is fresh.", zh: "趁热打铁，学以致用。" }
+  ]);
+  QUOTES.push.apply(QUOTES, [
+    { en: "Serenity is a strength you carry within.", zh: "平和是随身携带的力量。" },
+    { en: "Gratitude turns what we have into enough.", zh: "感恩，让拥有变得足够。" },
+    { en: "Do not let yesterday take up too much of today.", zh: "别让昨日占用今日太多时光。" },
+    { en: "A grateful heart sees the good in plain days.", zh: "感恩的心，能在平常日子里看见美好。" },
+    { en: "Worry does not empty tomorrow of its sorrow.", zh: "忧虑无法清空明日的忧愁。" },
+    { en: "Be gentle with yourself along the way.", zh: "一路上，请对自己温柔些。" },
+    { en: "Peace comes from accepting what cannot be changed.", zh: "接纳不可改变之事，心才安宁。" },
+    { en: "Contentment is not laziness, it is balance.", zh: "知足不是懒惰，而是平衡。" },
+    { en: "Count your blessings, not your troubles.", zh: "细数福气，而非烦恼。" },
+    { en: "A calm breath settles a restless mind.", zh: "一次深呼吸，安定纷乱的心。" },
+    { en: "Let go of what drains your spirit.", zh: "放下消耗你精神的事物。" },
+    { en: "Happiness is a choice made each morning.", zh: "快乐是每个清晨做出的选择。" },
+    { en: "Accept the season you are in.", zh: "接纳自己所处的阶段。" },
+    { en: "Soft words keep relationships warm.", zh: "温和的言语，让关系保持温度。" },
+    { en: "Kindness costs little and means much.", zh: "善意所费不多，分量却重。" },
+    { en: "A thankful eye notices small joys.", zh: "心怀感恩，才看得见细碎欢喜。" },
+    { en: "Release anger before it settles in.", zh: "别让怒气沉淀下来。" },
+    { en: "Envy dims the light of your own path.", zh: "嫉妒会遮蔽自己路上的光。" },
+    { en: "Rest when tired, rise when ready.", zh: "累了就休息，准备好再起身。" },
+    { en: "A steady heart handles sharp words.", zh: "内心笃定，方能应对言语伤人。" },
+    { en: "Look for the good in every person.", zh: "在每个人身上寻找可取之处。" },
+    { en: "Forgive others to free yourself.", zh: "宽恕他人，也是解放自己。" },
+    { en: "Do not compare your inside to their outside.", zh: "别拿自己的内里，比别人的外表。" },
+    { en: "Simplicity is the keynote of a calm life.", zh: "简单，是平静生活的基调。" },
+    { en: "Cherish the people who stay beside you.", zh: "珍惜留在身边的人。" },
+    { en: "Anxiety shrinks when the present grows.", zh: "专注当下，焦虑便会缩小。" },
+    { en: "Take care of your thoughts, they become words.", zh: "留意念头，它们会化作言语。" },
+    { en: "A smile is the quietest greeting.", zh: "微笑是最安静的问候。" },
+    { en: "Hope for the best, prepare for the worst.", zh: "抱最好的希望，做最坏的准备。" },
+    { en: "Do not chase approval from everyone.", zh: "不必追求所有人的认可。" },
+    { en: "Quiet days hold hidden comfort.", zh: "安静的日子里藏着慰藉。" },
+    { en: "Being patient with others begins with patience for yourself.", zh: "待人以耐心，先待己以耐心。" },
+    { en: "Lighten your load by letting go.", zh: "放下，才能减轻负担。" },
+    { en: "A warm memory can carry you through cold days.", zh: "温暖的回忆，能陪你走过寒冷时节。" },
+    { en: "Notice the beauty you usually pass by.", zh: "留意那些常被你错过的美。" },
+    { en: "Peace does not mean no trouble, it means handling it.", zh: "安宁不是没有纷扰，而是能够应对。" },
+    { en: "Speak only when your words are better than silence.", zh: "言语若不比沉默更好，便不必开口。" },
+    { en: "A good listener is rare and valued.", zh: "善于倾听的人，难得而可贵。" },
+    { en: "Do not let pride close an open heart.", zh: "别让骄傲关上敞开的心。" },
+    { en: "Little comforts make a full life.", zh: "小小的慰藉，凑成饱满的生活。" },
+    { en: "Respect yourself, and others will follow.", zh: "尊重自己，他人才会尊重你。" },
+    { en: "Breathe in courage, breathe out fear.", zh: "吸入勇气，呼出恐惧。" },
+    { en: "A grateful pause changes the mood of a day.", zh: "心怀感恩的片刻，能改变一天的心情。" },
+    { en: "Let your actions speak, your anger rest.", zh: "让行动说话，让怒气安息。" },
+    { en: "Even shadows are proof that light exists.", zh: "连阴影都证明了光的存在。" },
+    { en: "Be a calm shelter for someone in the storm.", zh: "做他人风雨中的一份安稳。" },
+    { en: "Appreciate what you have while reaching for more.", zh: "向往更多的同时，珍惜当下所有。" },
+    { en: "A light heart walks a long road.", zh: "心情轻盈，路才能走得长远。" },
+    { en: "Choose understanding over being right.", zh: "选择理解，而非争出输赢。" },
+    { en: "Gentleness is not weakness, it is poise.", zh: "温和不是软弱，而是从容。" }
+  ]);
+  QUOTES.push.apply(QUOTES, [
+    { en: "A dream written down becomes a goal.", zh: "写下来的梦想，就成了目标。" },
+    { en: "Goals give direction to scattered energy.", zh: "目标让分散的精力有了方向。" },
+    { en: "Time waits for no one, use it well.", zh: "时不我待，善加利用。" },
+    { en: "Plan your day before it plans you.", zh: "先规划一天，别被一天推着走。" },
+    { en: "Big dreams break into small daily tasks.", zh: "宏大的梦想，拆成每日的小事。" },
+    { en: "Do not put off till tomorrow what matters today.", zh: "今日要紧事，别拖到明天。" },
+    { en: "A clear target makes every step meaningful.", zh: "目标清晰，每一步都有意义。" },
+    { en: "Spend time on what moves you forward.", zh: "把时间花在推动你前进的事上。" },
+    { en: "Dreams without deadlines stay wishes.", zh: "没有期限的梦想，只是愿望。" },
+    { en: "Set one goal, give it your full attention.", zh: "定下一个目标，全心投入。" },
+    { en: "Time is the raw material of achievement.", zh: "时间是成就的原材料。" },
+    { en: "Review your goals at the end of each week.", zh: "每周末复盘自己的目标。" },
+    { en: "Aim high, start small, keep steady.", zh: "志存高远，起步要小，步履要稳。" },
+    { en: "Do not let busyness hide your real aim.", zh: "别让忙碌掩盖了真正的目标。" },
+    { en: "Tomorrow belongs to those preparing today.", zh: "明天属于今天就在准备的人。" },
+    { en: "Each hour used well is an investment.", zh: "用好的每一小时，都是一笔投资。" },
+    { en: "Break a large goal into reachable parts.", zh: "把大目标拆成够得着的部分。" },
+    { en: "Wish on the stars, but move your feet.", zh: "可以仰望星空，但要迈开双脚。" },
+    { en: "A schedule protects your most important hours.", zh: "日程表守护你最重要的时光。" },
+    { en: "Do not dream a little, dream boldly.", zh: "别只做小梦，要大胆去想。" },
+    { en: "Focus and finish what you begin.", zh: "专注，并完成已经开始的事。" },
+    { en: "The clock keeps ticking, choose wisely.", zh: "时钟不停走动，选择要明智。" },
+    { en: "A goal reached raises the next one.", zh: "达成一个目标，便立下下一个。" },
+    { en: "Save time by deciding once.", zh: "一次想清楚，省下反复纠结的时间。" },
+    { en: "Vision without action stays a picture.", zh: "愿景不行动，只是一幅画。" },
+    { en: "Make room in your day for what matters.", zh: "给要紧的事留出一天中的位置。" },
+    { en: "Ambition paired with patience goes far.", zh: "雄心配上耐心，方能走远。" },
+    { en: "Do not measure a dream by its early days.", zh: "别用最初的日子衡量一个梦想。" },
+    { en: "A written plan turns hope into steps.", zh: "写下的计划，把希望变成步骤。" },
+    { en: "Prioritize the few things that count.", zh: "把少数要紧的事排在前面。" },
+    { en: "Time lost in regret cannot be recovered.", zh: "耗在懊悔里的时间，无法追回。" },
+    { en: "Reach for a goal that makes you stretch.", zh: "去够那个需要你踮脚的目标。" },
+    { en: "Start the day with your hardest task.", zh: "一天从最难的任务开始。" },
+    { en: "Dreams grow when shared with the right people.", zh: "与对的人分享，梦想会生长。" },
+    { en: "A steady routine feeds a big ambition.", zh: "稳定的日常，滋养远大的抱负。" },
+    { en: "Do not wait for the perfect moment.", zh: "别等待那个完美的时刻。" },
+    { en: "Measure progress, not just speed.", zh: "衡量进步，而不只是速度。" },
+    { en: "One focused hour beats a distracted day.", zh: "专注一小时，胜过涣散一整天。" },
+    { en: "Keep your aim visible throughout the day.", zh: "让目标在一天里始终可见。" },
+    { en: "What you schedule gets done, what you hope for does not.", zh: "排进日程的事会完成，只靠期盼的事不会。" },
+    { en: "Dream of the end, work on the next step.", zh: "预想终点，走好下一步。" },
+    { en: "Use waiting time to plan or reflect.", zh: "把等待的时间用来规划或复盘。" },
+    { en: "Aim to improve one percent each day.", zh: "力求每天进步百分之一。" },
+    { en: "Do not scatter your energy across too many aims.", zh: "别把精力分散到太多目标上。" },
+    { en: "The road to a dream is paved with daily choices.", zh: "通往梦想的路，由每日选择铺成。" },
+    { en: "Set goals that excite and scare you a little.", zh: "定下既让你兴奋、又略有压力的目标。" },
+    { en: "Time respects those who use it seriously.", zh: "时间尊重认真对待它的人。" },
+    { en: "A clear plan removes the fog of the day.", zh: "清晰的计划，驱散一天的迷雾。" },
+    { en: "Hold the dream, but ground it in action.", zh: "守住梦想，但要落地为行动。" },
+    { en: "Begin again whenever the day slips away.", zh: "日子溜走了，随时可以重新开始。" }
+  ]);
+  QUOTES.push.apply(QUOTES, [
+    { en: "Discipline is choosing what you want most over what you want now.", zh: "自律，是选最想要的，而非当下最想做的。" },
+    { en: "Integrity means doing right when no one watches.", zh: "正直，是无人注视时仍行正道。" },
+    { en: "Self-control keeps desire in its place.", zh: "自律让欲望各安其位。" },
+    { en: "Courage grows with each small brave act.", zh: "勇气在每一次小小的勇敢中生长。" },
+    { en: "Resilience is the ability to bounce back.", zh: "坚韧，是跌倒后重新站起的能力。" },
+    { en: "Honesty builds trust that lasts years.", zh: "诚实建立起经年累月的信任。" },
+    { en: "A strong character shows under pressure.", zh: "品格的高下，在压力下显现。" },
+    { en: "Hold yourself to a higher standard than others do.", zh: "对自己的要求，高于他人对你的期待。" },
+    { en: "Do not make promises you cannot keep.", zh: "不轻许自己做不到的承诺。" },
+    { en: "Modesty lets your work speak for itself.", zh: "谦逊让作品自己说话。" },
+    { en: "Endurance turns trials into strength.", zh: "坚持把磨难化作力量。" },
+    { en: "Stand by your values even when it costs you.", zh: "即使有所付出，也坚守自己的原则。" },
+    { en: "A reliable person keeps their word.", zh: "可靠的人，言出必行。" },
+    { en: "Restraint in speech shows inner maturity.", zh: "言语克制，是内心成熟的体现。" },
+    { en: "Bravery is taking the next hard step.", zh: "勇敢，是迈出艰难的下一步。" },
+    { en: "Do not blame others for your own choices.", zh: "别把自己的选择归咎于他人。" },
+    { en: "Steady nerves win over loud reactions.", zh: "沉着冷静胜过激烈反应。" },
+    { en: "A disciplined mind handles temptation easily.", zh: "自律的心，面对诱惑从容不迫。" },
+    { en: "Take responsibility for your own life.", zh: "为自己的人生负起责任。" },
+    { en: "Truth may be uncomfortable, but it clears the way.", zh: "真相或许刺耳，却能扫清道路。" },
+    { en: "Patience under pressure reveals true grit.", zh: "压力之下的耐心，显出真正的毅力。" },
+    { en: "Do not seek praise, seek self-respect.", zh: "不求赞美，只求无愧于心。" },
+    { en: "A person of honor keeps faith in small matters.", zh: "守道义的人，小事上也不失信。" },
+    { en: "Self-reliance opens doors you cannot borrow.", zh: "自立自强，打开借不来的门。" },
+    { en: "Tough times reveal what you are made of.", zh: "艰难时刻，见出你的本色。" },
+    { en: "Keep your word even when it is inconvenient.", zh: "即便不便，也要信守承诺。" },
+    { en: "Humility invites advice, pride blocks it.", zh: "谦逊听得进劝告，骄傲听不进。" },
+    { en: "Resolve small conflicts before they grow.", zh: "小矛盾及时化解，别让它扩大。" },
+    { en: "A firm decision calms a restless mind.", zh: "坚定的决定，安定纷乱的心。" },
+    { en: "Do not shift the burden onto others.", zh: "别把担子推给别人。" },
+    { en: "Inner strength shows when plans fall apart.", zh: "计划落空时，方见内心力量。" },
+    { en: "Practice what you preach.", zh: "言传不如身教。" },
+    { en: "A good name is built day by day.", zh: "好名声是一天天积累起来的。" },
+    { en: "Face difficulties instead of hiding from them.", zh: "直面困难，而不是躲避。" },
+    { en: "Moderation keeps habits from turning into vices.", zh: "节制让习惯不至于沦为嗜好。" },
+    { en: "Depend on yourself first, then on others.", zh: "先靠自己，再靠他人。" },
+    { en: "A brave heart admits when it is wrong.", zh: "勇敢的心，敢于承认错误。" },
+    { en: "Keep your temper under your own control.", zh: "把脾气掌握在自己手里。" },
+    { en: "Honor the trust placed in you.", zh: "珍视别人给予你的信任。" },
+    { en: "Endure the short discomfort of discipline.", zh: "忍受自律带来的短暂不适。" },
+    { en: "Do not judge a person by one mistake.", zh: "别凭一次过错评判一个人。" },
+    { en: "Quiet determination outshines loud boasts.", zh: "默默的决心，胜过高声吹嘘。" },
+    { en: "A person who controls themselves controls their fate.", zh: "能掌控自己的人，方能掌控命运。" },
+    { en: "Take the hard path when it is the right one.", zh: "当艰难之路是正途时，就走上去。" },
+    { en: "Fairness matters more than being favored.", zh: "公道比受偏爱更重要。" },
+    { en: "Your character is what remains when applause fades.", zh: "掌声散去后，留下的便是品格。" },
+    { en: "Do not compromise your standards for ease.", zh: "别为了安逸降低自己的标准。" },
+    { en: "Steadfastness keeps you anchored in change.", zh: "坚定让你在变化中站稳脚跟。" },
+    { en: "A disciplined today builds a freer tomorrow.", zh: "自律的今天，换来更从容的明天。" },
+    { en: "Meet hardship with a steady gaze.", zh: "以沉稳的目光迎接困苦。" }
+  ]);
+  QUOTES.push.apply(QUOTES, [
+    { en: "The sun rises after the longest night.", zh: "黑夜再长，太阳照常升起。" },
+    { en: "A river cuts rock not by force, but persistence.", zh: "河流穿石，靠的不是蛮力，而是坚持。" },
+    { en: "Trees grow slow, but their roots go deep.", zh: "树木生长缓慢，根却扎得很深。" },
+    { en: "Spring returns even after the coldest winter.", zh: "寒冬再冷，春天终会归来。" },
+    { en: "Rain feeds the seeds hidden in the soil.", zh: "雨水滋养着泥土里的种子。" },
+    { en: "A calm lake reflects the sky clearly.", zh: "湖面平静，才映得出天空。" },
+    { en: "Waves keep rolling toward the shore.", zh: "浪花不停涌向岸边。" },
+    { en: "Every flower blooms in its own season.", zh: "每朵花都有自己的花期。" },
+    { en: "The wind carries seeds to distant ground.", zh: "风把种子带到远方的土地。" },
+    { en: "Mountain paths reward those who climb.", zh: "山路属于愿意攀登的人。" },
+    { en: "Dew on grass sparkles only in early light.", zh: "草上的露珠，只在晨光里闪亮。" },
+    { en: "A forest grows from countless small trees.", zh: "一片森林，由无数小树长成。" },
+    { en: "Stars appear when the sky turns dark.", zh: "天色暗下来，星星才显现。" },
+    { en: "The tide moves in its own rhythm.", zh: "潮汐自有它的节奏。" },
+    { en: "Birds return to their nests at dusk.", zh: "黄昏时分，鸟儿归巢。" },
+    { en: "Soil rests in fall before sowing.", zh: "播种之前，泥土先要休养。" },
+    { en: "A single leaf falls before the whole autumn.", zh: "一片叶子落下，便是秋天的开始。" },
+    { en: "Frost makes the fruit sweeter.", zh: "霜冻让果实更甜。" },
+    { en: "Rivers know the way to the sea.", zh: "河流自有通往大海的路。" },
+    { en: "Mountains do not move, but travelers arrive.", zh: "山峦不移，行者自至。" },
+    { en: "Morning air refreshes the waking world.", zh: "清晨的空气，唤醒世界。" },
+    { en: "Clouds pass, the blue returns.", zh: "云朵飘过，蓝天依旧。" },
+    { en: "A seed does not see the tree it will become.", zh: "种子看不见自己将来长成的树。" },
+    { en: "Roots work in silence beneath the ground.", zh: "根在地下默默生长。" },
+    { en: "The deepest wells yield the clearest water.", zh: "深井涌出的水最清。" },
+    { en: "Day by day, the oak grows its strength.", zh: "橡树日复一日积蓄力量。" },
+    { en: "A gentle breeze cools the heated hour.", zh: "轻风为燥热的时刻带来凉意。" },
+    { en: "Frost and sun together ripen the year.", zh: "寒霜与暖阳，共同催熟年岁。" },
+    { en: "The moon does not hurry through its phases.", zh: "月亮从容走过它的圆缺。" },
+    { en: "Small streams join to form great rivers.", zh: "细流汇聚，方成大河。" },
+    { en: "A garden needs both sun and rain.", zh: "花园既需要阳光，也需要雨水。" },
+    { en: "Old trees shelter the new shoots.", zh: "老树为新苗遮风挡雨。" },
+    { en: "The horizon stretches beyond what we see.", zh: "地平线远在目力之外。" },
+    { en: "Quiet fields hold their own rhythm.", zh: "安静的田野有自己的节奏。" },
+    { en: "Light through leaves makes shifting patterns.", zh: "穿叶而过的光，投下斑驳光影。" },
+    { en: "Every season prepares the next.", zh: "每个季节都在为下一个做准备。" },
+    { en: "The bark protects the living wood inside.", zh: "树皮护着内里活着的木质。" },
+    { en: "A warm day follows a cold dawn.", zh: "寒冷的黎明之后，常有暖阳。" },
+    { en: "Nature never rushes, yet everything completes.", zh: "自然从不慌张，却万物自成。" },
+    { en: "Gravity holds the stars in their courses.", zh: "引力让星辰各行其道。" },
+    { en: "The far view comforts a tired eye.", zh: "远眺能宽慰疲惫的目光。" },
+    { en: "Even deserts bloom after rain.", zh: "沙漠逢雨，也会开花。" },
+    { en: "A butterfly was once a crawling caterpillar.", zh: "蝴蝶也曾是爬行的毛虫。" },
+    { en: "The sound of water calms a busy mind.", zh: "水声能安抚忙碌的心。" },
+    { en: "Snow covers, but does not kill, the seed.", zh: "大雪覆盖，却不冻死种子。" },
+    { en: "Each sunset prepares the next sunrise.", zh: "每一场日落，都在预备下一次日出。" },
+    { en: "A sturdy branch bends but does not break.", zh: "结实的枝条弯曲却不折断。" },
+    { en: "The deep forest keeps its own secrets.", zh: "幽深的森林守着自己的秘密。" },
+    { en: "Distant mountains look soft, up close they are rough.", zh: "远山柔和，近山嶙峋。" },
+    { en: "Patience lets the harvest ripen on the vine.", zh: "耐心让收成在藤上慢慢成熟。" }
+  ]);
+  QUOTES.push.apply(QUOTES, [
+    { en: "A good word opens many doors.", zh: "一句好话，能推开许多门。" },
+    { en: "Listen before you judge a situation.", zh: "先倾听，再判断一件事。" },
+    { en: "Help others without keeping score.", zh: "帮助别人，不必记在账上。" },
+    { en: "Friendship grows on mutual respect.", zh: "友谊建立在相互尊重之上。" },
+    { en: "Share what you have, however small.", zh: "拥有多少，就分享多少。" },
+    { en: "A warm welcome makes a house a home.", zh: "热情的接待，让房子成为家。" },
+    { en: "Speak to people as you would be spoken to.", zh: "希望别人如何待你，你就如何待人。" },
+    { en: "Forgiveness frees both sides.", zh: "宽恕让双方都得解脱。" },
+    { en: "Reliable friends show up in hard times.", zh: "可靠的朋友，患难时才现身。" },
+    { en: "Do not interrupt when someone tells their story.", zh: "别人讲述时，不要打断。" },
+    { en: "A kind gesture lingers in memory.", zh: "善意的举动，会长留记忆。" },
+    { en: "Different views do not have to divide people.", zh: "观点不同，不一定要彼此疏远。" },
+    { en: "Praise openly, correct privately.", zh: "公开表扬，私下提醒。" },
+    { en: "A helping hand lifts more than words.", zh: "伸出的手，胜过千言万语。" },
+    { en: "Keep confidences shared with you.", zh: "替别人守住托付你的秘密。" },
+    { en: "Be honest but gentle in feedback.", zh: "提意见要诚实，也要温和。" },
+    { en: "People remember how you made them feel.", zh: "人们记得你带给他们的感受。" },
+    { en: "A steady companion lightens a long road.", zh: "踏实的同行者，让长路变轻。" },
+    { en: "Do not take loved ones for granted.", zh: "别把身边人视作理所当然。" },
+    { en: "Small talk builds the bridge to real talk.", zh: "寒暄是通往深谈的桥。" },
+    { en: "Respect differences in habit and taste.", zh: "尊重习惯与喜好上的差异。" },
+    { en: "A thank-you keeps kindness flowing.", zh: "一句谢谢，让善意延续下去。" },
+    { en: "Stand up for those who cannot speak up.", zh: "为无法发声的人仗义执言。" },
+    { en: "A shared meal strengthens a bond.", zh: "同桌而食，情谊更深。" },
+    { en: "Do not hold a grudge against a sincere apology.", zh: "真诚的道歉，不必记恨。" },
+    { en: "Encourage someone who feels unsure.", zh: "鼓励那个心存犹豫的人。" },
+    { en: "Trust is earned slowly, lost quickly.", zh: "信任慢慢赢得，却容易失去。" },
+    { en: "A calm reply turns away anger.", zh: "平和的回应，能退去怒气。" },
+    { en: "Give credit where it is due.", zh: "功劳该归谁，就归于谁。" },
+    { en: "People connect through shared effort.", zh: "人在共同付出中彼此靠近。" },
+    { en: "Keep your circle supportive, not competitive.", zh: "让身边的人互相扶持，而非彼此较劲。" },
+    { en: "A thoughtful gift needs no high price.", zh: "有心的礼物，不必昂贵。" },
+    { en: "Be patient with people learning new things.", zh: "对学习新事物的人多些耐心。" },
+    { en: "An open hand receives as well as gives.", zh: "摊开的手，既能给予，也能承接。" },
+    { en: "Do not gossip about those absent.", zh: "不在背后议论不在场的人。" },
+    { en: "A shared laugh brings people closer.", zh: "一同欢笑，让人更亲近。" },
+    { en: "Respect the pace of those beside you.", zh: "尊重同行者自己的节奏。" },
+    { en: "Kindness repeated becomes a habit.", zh: "善意重复多次，便成习惯。" },
+    { en: "A sincere apology repairs what harsh words broke.", zh: "真诚的道歉，修补恶语造成的裂痕。" },
+    { en: "Notice when someone needs support.", zh: "留意谁正需要支持。" },
+    { en: "The best relationships leave room to breathe.", zh: "好的关系，留有呼吸的空间。" },
+    { en: "Do not compare your friends to others.", zh: "别拿自己的朋友和别人比。" },
+    { en: "A respectful disagreement still respects the person.", zh: "意见相左，仍要尊重对方本人。" },
+    { en: "Warmth returned keeps friendships alive.", zh: "回应的热情，让友谊长存。" },
+    { en: "Lend an ear before offering advice.", zh: "先倾听，再给建议。" },
+    { en: "Good company makes hard work lighter.", zh: "好伙伴让辛苦的事变得轻松。" },
+    { en: "Treat every person with basic courtesy.", zh: "对每个人都保持基本礼貌。" },
+    { en: "A life lived well helps those around it.", zh: "活得认真的人，也照亮身边人。" },
+    { en: "Carry kindness wherever you go.", zh: "无论走到哪里，带上善意。" },
+    { en: "Keep walking forward, and carry good memories with you.", zh: "继续向前走，把美好的回忆带在身边。" }
+  ]);
+  function renderQuote() {
+    var now = new Date();
+    var start = new Date(now.getFullYear(), 0, 0);
+    var dayOfYear = Math.floor((now - start) / 86400000);
+    var q = QUOTES[dayOfYear % QUOTES.length];
+    document.getElementById("quoteEn").textContent = q.en;
+    document.getElementById("quoteZh").textContent = q.zh;
+  }
   function tick() {
     var now = new Date();
     var h = now.getHours();
@@ -382,6 +820,7 @@
       " " + pad(h) + ":" + pad(now.getMinutes());
   }
   tick();
+  renderQuote();
   setInterval(tick, 30000);
 
   /* ===== 工具 ===== */
